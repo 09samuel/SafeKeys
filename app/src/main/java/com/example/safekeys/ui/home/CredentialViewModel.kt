@@ -4,13 +4,29 @@ import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.safekeys.*
+import com.example.safekeys.data.model.Credential
+import com.example.safekeys.data.model.SortType
+import com.example.safekeys.domain.repository.CredentialRepository
+import com.example.safekeys.utils.CryptoManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import javax.inject.Inject
 
-class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
+@HiltViewModel
+class CredentialViewModel @Inject constructor(
+    private val credentialRepository: CredentialRepository,
+) :
+    ViewModel() {
+
+    //val decryptedPasswords = mutableMapOf<Int, String>()
 
     private val _sortType = MutableStateFlow(SortType.TITLE)
     private val cryptoManager = CryptoManager()
@@ -18,8 +34,8 @@ class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _credentials = _sortType.flatMapLatest { sortType ->
         when (sortType) {
-            SortType.TITLE -> dao.getCredentialsOrderedByTitle()
-            SortType.DATE_CREATED -> dao.getCredentialsOrderedByDateCreated()
+            SortType.TITLE -> credentialRepository.getCredentialsOrderedByTitle()
+            SortType.DATE_CREATED -> credentialRepository.getCredentialsOrderedByDateCreated()
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
@@ -35,7 +51,7 @@ class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
         when (event) {
             is CredentialEvent.DeleteCredential -> {
                 viewModelScope.launch {
-                    dao.deleteCredential(event.credential)
+                    credentialRepository.deleteCredential(event.credential)
                 }
             }
 
@@ -51,15 +67,30 @@ class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
                 val website = state.value.website
                 val title = state.value.title
 
+
+
                 if (username.isBlank() || password.isBlank() || website.isBlank() || title.isBlank()) {
+                    _state.update {
+                        it.copy(
+                            usernameError = if (username.isBlank()) "Username is required." else null,
+                            passwordError = if (password.isBlank()) "Password is required." else null,
+                            websiteError = if (website.isBlank()) "Website is required." else null,
+                            titleError = if (title.isBlank()) "Title is required." else null
+                        )
+                    }
                     return
                 }
+
+
 
                 try {
                     val bytes = password.encodeToByteArray()
                     val encryptedData = cryptoManager.encrypt(bytes)
 
-                    Log.i("EncryptedBytes", Base64.encodeToString(encryptedData.encryptedBytes, Base64.DEFAULT))
+                    Log.i(
+                        "EncryptedBytes",
+                        Base64.encodeToString(encryptedData.encryptedBytes, Base64.DEFAULT)
+                    )
                     Log.i("IV", Base64.encodeToString(encryptedData.iv, Base64.DEFAULT))
 
                     val credential = Credential(
@@ -72,11 +103,17 @@ class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
                     )
 
                     viewModelScope.launch {
-                        dao.upsertCredential(credential)
+                        credentialRepository.upsertCredential(credential)
                     }
 
                     _state.update {
-                        it.copy(isAddingCredential = false, username = "", password = "", website = "", title = "")
+                        it.copy(
+                            isAddingCredential = false,
+                            username = "",
+                            password = "",
+                            website = "",
+                            title = ""
+                        )
                     }
                 } catch (e: Exception) {
                     Log.e("SaveCredentialError", "Error saving credential", e)
@@ -106,16 +143,30 @@ class CredentialViewModel(private val dao: CredentialDao) : ViewModel() {
             is CredentialEvent.SortCredentials -> {
                 _sortType.value = event.sortType
             }
+
+            is CredentialEvent.DecryptCredentials -> {
+                try {
+                    val decryptedBytes =
+                        cryptoManager.decrypt(event.credential.iv, event.credential.password)
+                    val decryptedPassword = decryptedBytes.decodeToString()
+                    val updatedDecryptedPasswords = _state.value.decryptedPassword.toMutableMap()
+                    updatedDecryptedPasswords[event.credential.id] = decryptedPassword
+                    _state.update { it.copy(decryptedPassword = updatedDecryptedPasswords) }
+                } catch (e: Exception) {
+                    Log.e("DecryptError", "Error during decryption", e)
+                }
+            }
         }
     }
 
-    fun decryptCredential(credential: Credential): String {
-        return try {
-            val decryptedBytes = cryptoManager.decrypt(credential.iv, credential.password)
-            decryptedBytes.decodeToString()
-        } catch (e: Exception) {
-            Log.e("DecryptError", "Error during decryption", e)
-            ""
-        }
-    }
+
+//    fun decryptCredential(credential: Credential): String {
+//        return try {
+//            val decryptedBytes = cryptoManager.decrypt(credential.iv, credential.password)
+//            decryptedBytes.decodeToString()
+//        } catch (e: Exception) {
+//            Log.e("DecryptError", "Error during decryption", e)
+//            ""
+//        }
+//    }
 }

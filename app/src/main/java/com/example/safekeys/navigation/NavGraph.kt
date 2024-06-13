@@ -1,149 +1,69 @@
-//import androidx.compose.material3.Scaffold
+//// NavGraph.kt
+//package com.example.safekeys.navigation
+//
 //import androidx.compose.runtime.Composable
 //import androidx.compose.runtime.collectAsState
 //import androidx.compose.runtime.getValue
-//import androidx.lifecycle.viewmodel.compose.viewModel
+//import androidx.lifecycle.Lifecycle
 //import androidx.navigation.NavHostController
 //import androidx.navigation.compose.NavHost
 //import androidx.navigation.compose.composable
-//import androidx.navigation.compose.currentBackStackEntryAsState
-//import androidx.navigation.compose.rememberNavController
-//import com.example.safekeys.navigation.Screen
-//import com.example.safekeys.screens.CredentialsScreen
-//import com.example.safekeys.screens.LoginScreen
-//import com.example.safekeys.screens.SignUpScreen
-//import com.example.safekeys.ui.auth.AuthViewModel
+//import com.example.safekeys.ui.screens.CredentialsScreen
+//import com.example.safekeys.ui.screens.LoginScreen
+//import com.example.safekeys.ui.screens.SignUpScreen
+//import com.example.safekeys.ui.auth.signup.SignUpViewModel
 //import com.example.safekeys.ui.home.CredentialViewModel
+//import com.example.safekeys.ui.auth.login.LoginViewModel
 //
 //@Composable
-//fun CupcakeApp(
-//    authViewModel: AuthViewModel = viewModel(),
-//    credentialViewModel: CredentialViewModel = viewModel(),
-//    navController: NavHostController = rememberNavController()
+//fun NavGraph(
+//    navController: NavHostController,
+//    signUpViewModel: SignUpViewModel,
+//    credentialViewModel: CredentialViewModel,
+//    loginViewModel: LoginViewModel
 //) {
-//    // Get current back stack entry
-//    val backStackEntry by navController.currentBackStackEntryAsState()
-//    // Get the name of the current screen
-////    val currentScreen = CupcakeScreen.valueOf(
-////        backStackEntry?.destination?.route ?: CupcakeScreen.Start.name
-////    )
+//    val credentialState by credentialViewModel.state.collectAsState()
+//    val signUpState by signUpViewModel.signUpState.collectAsState()
+//    val loginState by loginViewModel.loginState.collectAsState()
 //
-//    Scaffold(
-//        topBar = {
-//            CupcakeAppBar(
-//                currentScreen = currentScreen,
-//                canNavigateBack = navController.previousBackStackEntry != null,
-//                navigateUp = { navController.navigateUp() }
+//    NavHost(navController = navController, startDestination = if (signUpState.isRegistered) Screen.Login else Screen.SignUp) {
+//        composable<Screen.SignUp> {
+//            SignUpScreen(
+//                state = signUpState,
+//                onEvent = signUpViewModel::onEvent,
+//                onClick = {
+//                    navController.navigate(Screen.Home) {
+//                        popUpTo(Screen.SignUp) { inclusive = true }
+//                    }
+//                }
 //            )
 //        }
-//    ) { innerPadding ->
-//
-//        val isRegistered by authViewModel.isRegistered.collectAsState()
-//        val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
-//        val credentialState by credentialViewModel.state.collectAsState()
-//
-//        val uiState by viewModel.uiState.collectAsState()
-//
-//        NavHost(
-//            navController = navController,
-//            startDestination = CupcakeScreen.Start.name,
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .verticalScroll(rememberScrollState())
-//                .padding(innerPadding)
-//        ) {
-//            composable<Screen> {
-//                StartOrderScreen(
-//                    quantityOptions = DataSource.quantityOptions,
-//                    onNextButtonClicked = {
-//                        viewModel.setQuantity(it)
-//                        navController.navigate(CupcakeScreen.Flavor.name)
-//                    },
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(dimensionResource(R.dimen.padding_medium))
-//                )
-//            }
-//            composable(route = CupcakeScreen.Flavor.name) {
-//                val context = LocalContext.current
-//                SelectOptionScreen(
-//                    subtotal = uiState.price,
-//                    onNextButtonClicked = { navController.navigate(CupcakeScreen.Pickup.name) },
-//                    onCancelButtonClicked = {
-//                        cancelOrderAndNavigateToStart(viewModel, navController)
-//                    },
-//                    options = DataSource.flavors.map { id -> context.resources.getString(id) },
-//                    onSelectionChanged = { viewModel.setFlavor(it) },
-//                    modifier = Modifier.fillMaxHeight()
-//                )
-//            }
-//            composable(route = CupcakeScreen.Pickup.name) {
-//                SelectOptionScreen(
-//                    subtotal = uiState.price,
-//                    onNextButtonClicked = { navController.navigate(CupcakeScreen.Summary.name) },
-//                    onCancelButtonClicked = {
-//                        cancelOrderAndNavigateToStart(viewModel, navController)
-//                    },
-//                    options = uiState.pickupOptions,
-//                    onSelectionChanged = { viewModel.setDate(it) },
-//                    modifier = Modifier.fillMaxHeight()
-//                )
-//            }
-//            composable(route = CupcakeScreen.Summary.name) {
-//                val context = LocalContext.current
-//                OrderSummaryScreen(
-//                    orderUiState = uiState,
-//                    onCancelButtonClicked = {
-//                        cancelOrderAndNavigateToStart(viewModel, navController)
-//                    },
-//                    onSendButtonClicked = { subject: String, summary: String ->
-//                        shareOrder(context, subject = subject, summary = summary)
-//                    },
-//                    modifier = Modifier.fillMaxHeight()
-//                )
-//            }
-//        }
-//    }
-//}
-//
-//if (isRegistered) {
-//    if (!isAuthenticated) {
-//        NavHost(navController = navController, startDestination = Screen.Login) {
-//            composable<Screen.Login> {
-//                LoginScreen(onClick = {
-//                    navController.navigate(Screen.Home)
-//                })
-//            }
-//            composable<Screen.Home> {
-//                CredentialsScreen(
-//                    state = credentialState,
-//                    onEvent = credentialViewModel::onEvent
-//                )
-//            }
-//        }
-//    } else {
-//        NavHost(navController = navController, startDestination = Screen.Home) {
-//            composable<Screen.Home> {
-//                CredentialsScreen(
-//                    state = credentialState,
-//                    onEvent = credentialViewModel::onEvent
-//                )
-//            }
-//        }
-//    }
-//} else {
-//    NavHost(navController = navController, startDestination = Screen.SignUp) {
-//        composable<Screen.SignUp> {
-//            SignUpScreen()
-////                            if (isAuthenticated) {
-////                                navController.navigate(Screen.Home)
-////                            }
+//        composable<Screen.Login> {
+//            LoginScreen(
+//                state = loginState,
+//                onEvent = loginViewModel::onEvent,
+//                onClick = {
+//                    navController.navigate(Screen.Home) {
+//                        popUpTo(Screen.Login) { inclusive = true }
+//                    }
+//                }
+//            )
 //        }
 //        composable<Screen.Home> {
 //            CredentialsScreen(
 //                state = credentialState,
-//                onEvent = credentialViewModel::onEvent
+//                viewModel = credentialViewModel,
+//                onEvent = credentialViewModel::onEvent,
+//                onClick = {
+//                    if (navController.canGoBack) {
+//                        navController.popBackStack()
+//                    }
+//                }
 //            )
 //        }
 //    }
 //}
+//
+//// Extension property to check if navigation controller can go back
+//private val NavHostController.canGoBack: Boolean
+//    get() = this.currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED
