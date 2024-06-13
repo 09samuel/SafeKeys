@@ -28,7 +28,6 @@ import com.example.safekeys.data.model.Credential
 import com.example.safekeys.domain.repository.CredentialRepository
 import com.example.safekeys.domain.repository.UserRepository
 import com.example.safekeys.main.AuthActivity
-import com.example.safekeys.main.MainActivity
 import com.example.safekeys.utils.CryptoManager
 import com.example.safekeys.utils.SharedPreferenceHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -151,8 +150,8 @@ class MyAutofillService : AutofillService() {
                             )
 
                         fillResponseBuilder.addDataset(dataset.build())  // Add each dataset to the FillResponse builder
-                    }
 
+                    }
                     // Set SaveInfo once after adding all datasets
                     val saveInfo = SaveInfo.Builder(
                         SaveInfo.SAVE_DATA_TYPE_USERNAME or SaveInfo.SAVE_DATA_TYPE_PASSWORD,
@@ -326,20 +325,22 @@ class MyAutofillService : AutofillService() {
             setTextViewText(R.id.label, "for autofill and saving passwords")
         }
 
-        val authIntent = Intent(this, MainActivity::class.java).apply {
-//            putExtra("MY_EXTRA_DATASET_NAME", "my_dataset")
-//            putParcelableArrayListExtra("USERNAME_IDS", ArrayList(usernameId))
-//            putParcelableArrayListExtra("PASSWORD_IDS", ArrayList(passwordId))
+        val authIntent = Intent(this, AuthActivity::class.java).apply {
+            putExtra("MY_EXTRA_DATASET_NAME", "my_dataset")
+            putParcelableArrayListExtra("USERNAME_IDS", ArrayList(usernameId))
+            putParcelableArrayListExtra("PASSWORD_IDS", ArrayList(passwordId))
 
-            //flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
         val intentSender: IntentSender = PendingIntent.getActivity(
             this,
-            1001,
+            2,
             authIntent,
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         ).intentSender
+
+
 
         val fillResponse = FillResponse.Builder()
             .setAuthentication(
@@ -352,7 +353,6 @@ class MyAutofillService : AutofillService() {
         currentFillCallback?.onSuccess(fillResponse)
 
     }
-
 
 //    inner class Broadcast : BroadcastReceiver() {
 //        override fun onReceive(context: Context, intent: Intent) {

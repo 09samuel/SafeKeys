@@ -1,14 +1,8 @@
 package com.example.safekeys.main
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.service.autofill.Dataset
-import android.service.autofill.FillResponse
 import android.util.Log
-import android.view.autofill.AutofillId
-import android.view.autofill.AutofillValue
-import android.widget.RemoteViews
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +11,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.safekeys.R
 import com.example.safekeys.ui.auth.AuthViewModel
 import com.example.safekeys.ui.screens.AutofillAuthDialogue
 import com.example.safekeys.ui.theme.SafeKeysTheme
+import com.example.safekeys.utils.ExitBroadcastReceiver
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.coroutineScope
 
 @AndroidEntryPoint
 class AuthActivity : ComponentActivity() {
@@ -45,13 +38,14 @@ class AuthActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-        Log.i("efuso",e.toString())
+            Log.i("efuso", e.toString())
         }
     }
 
     private fun sendAuthResult() {
-        val intent = Intent("com.example.safekeys.AUTH_RESULT")
-        applicationContext.sendBroadcast(intent)
-        finish()
+        val autofillResultIntent = Intent(this, ExitBroadcastReceiver::class.java).apply {
+            action = "AUTOFILL_ACTION"
+        }
+        this.sendBroadcast(autofillResultIntent)
     }
 }

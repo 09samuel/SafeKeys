@@ -17,7 +17,9 @@
             android:name=".main.AuthActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.SafeKeys" />
+            android:theme="@style/Theme.SafeKeys"
+
+            />
         <activity
             android:name=".main.MainActivity"
             android:enabled="true"
