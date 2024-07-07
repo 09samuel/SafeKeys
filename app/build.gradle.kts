@@ -19,7 +19,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.safekeys.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+//    implementation(libs.androidx.runner)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -91,9 +92,35 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0-beta02")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    implementation("com.google.dagger:hilt-android:2.49")
-    ksp("com.google.dagger:hilt-android-compiler:2.49")
+    val hilt_version = "2.51.1"
+    implementation("com.google.dagger:hilt-android:$hilt_version")
+    ksp("com.google.dagger:hilt-android-compiler:$hilt_version")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    //local unit tests
+    testImplementation("androidx.test:core:1.4.0")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("com.google.truth:truth:1.1.3")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.8")
+
+    //instrumentation tests
+    androidTestImplementation("com.google.dagger:hilt-android-testing:$hilt_version")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:$hilt_version")
+    androidTestImplementation("junit:junit:4.13.2")
+    androidTestImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
+    androidTestImplementation ("androidx.arch.core:core-testing:2.2.0")
+    androidTestImplementation ("com.google.truth:truth:1.1.3")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.3")
+    androidTestImplementation ("androidx.test:core-ktx:1.6.1")
+    androidTestImplementation(libs.androidx.runner)
+    //androidTestImplementation ("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation ("androidx.test:rules:1.6.1")
+//    androidTestImplementation("io.mockk:mockk-android:1.10.5")
+    // Test rules and transitive dependencies:
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.8")
+// Needed for createComposeRule(), but not for createAndroidComposeRule<YourActivity>():
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.8")
 
 }

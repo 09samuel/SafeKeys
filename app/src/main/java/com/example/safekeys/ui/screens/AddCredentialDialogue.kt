@@ -14,37 +14,45 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.safekeys.ui.home.CredentialEvent
 import com.example.safekeys.ui.home.CredentialState
+import com.example.safekeys.ui.home.CredentialViewModel
+import com.example.safekeys.utils.TestTags
 
 @Composable
 fun AddCredentialDialogue(
-    state: CredentialState,
-    onEvent: (CredentialEvent) -> Unit,
-    modifier: Modifier = Modifier
+    viewModel: CredentialViewModel = hiltViewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
+
     AlertDialog(
-        modifier = modifier,
-        onDismissRequest = { onEvent(CredentialEvent.HideDialog) },
+        modifier = Modifier.testTag(TestTags.CREDENTIAL_DIALOGUE),
+        onDismissRequest = { viewModel.onEvent(CredentialEvent.HideDialog) },
         title = { "Add Credential" },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     singleLine = true,
                     value = state.username,
-                    onValueChange = { onEvent(CredentialEvent.SetUsername(it)) },
+                    onValueChange = { viewModel.onEvent(CredentialEvent.SetUsername(it)) },
                     placeholder = { Text(text = "Username") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.USERNAME_TEXT_FIELD),
                     isError = state.usernameError != null,
                 )
                 if (state.usernameError != null) {
                     Text(
-                        text = state.usernameError,
+                        text = state.usernameError!!,
                         color = MaterialTheme.colorScheme.error,
                         lineHeight = 14.sp,
                         fontSize = 12.sp
@@ -54,14 +62,14 @@ fun AddCredentialDialogue(
                 OutlinedTextField(
                     singleLine = true,
                     value = state.password,
-                    onValueChange = { onEvent(CredentialEvent.SetPassword(it)) },
+                    onValueChange = { viewModel.onEvent(CredentialEvent.SetPassword(it)) },
                     placeholder = { Text(text = "Password") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.PASSWORD_TEXT_FIELD),
                     isError = state.passwordError != null,
                 )
                 if (state.passwordError != null) {
                     Text(
-                        text = state.passwordError,
+                        text = state.passwordError!!,
                         color = MaterialTheme.colorScheme.error,
                         lineHeight = 14.sp,
                         fontSize = 12.sp
@@ -71,14 +79,14 @@ fun AddCredentialDialogue(
                 OutlinedTextField(
                     singleLine = true,
                     value = state.website,
-                    onValueChange = { onEvent(CredentialEvent.SetWebsite(it)) },
+                    onValueChange = { viewModel.onEvent(CredentialEvent.SetWebsite(it)) },
                     placeholder = { Text(text = "Website") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.WEBSITE_TEXT_FIELD),
                     isError = state.websiteError != null,
                 )
                 if (state.websiteError != null) {
                     Text(
-                        text = state.websiteError,
+                        text = state.websiteError!!,
                         color = MaterialTheme.colorScheme.error,
                         lineHeight = 14.sp,
                         fontSize = 12.sp
@@ -88,14 +96,14 @@ fun AddCredentialDialogue(
                 OutlinedTextField(
                     singleLine = true,
                     value = state.title,
-                    onValueChange = { onEvent(CredentialEvent.SetTitle(it)) },
+                    onValueChange = { viewModel.onEvent(CredentialEvent.SetTitle(it)) },
                     placeholder = { Text(text = "Title") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.TITLE_TEXT_FIELD),
                     isError = state.titleError != null,
                 )
                 if (state.titleError != null) {
                     Text(
-                        text = state.titleError,
+                        text = state.titleError!!,
                         color = MaterialTheme.colorScheme.error,
                         lineHeight = 14.sp,
                         fontSize = 12.sp
@@ -111,11 +119,12 @@ fun AddCredentialDialogue(
             ) {
                 OutlinedButton(
                     onClick = {
-                        onEvent(CredentialEvent.SaveCredential)
+                        viewModel.onEvent(CredentialEvent.SaveCredential)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(48.dp),
+                        .heightIn(48.dp)
+                        .semantics { contentDescription = "Save Credential" },
                     contentPadding = PaddingValues(),
                     shape = RoundedCornerShape(5.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black)

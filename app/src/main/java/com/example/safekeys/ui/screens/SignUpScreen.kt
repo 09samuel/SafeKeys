@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,19 +46,23 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.safekeys.R
 import com.example.safekeys.ui.auth.AuthViewModel
 import com.example.safekeys.ui.auth.signup.SignUpEvent
 import com.example.safekeys.ui.auth.signup.SignUpState
+import com.example.safekeys.utils.TestTags
 
 
 @Composable
 fun SignUpScreen(
-    viewModel: AuthViewModel,
-    state: SignUpState,
-    onEvent: (SignUpEvent) -> Unit,
-    onClick: () -> Unit
+    viewModel: AuthViewModel = hiltViewModel(),
+    onClick: () -> Unit,
+    //navController: NavController
 ) {
+    val state by viewModel.signUpState.collectAsState()
+
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
@@ -112,12 +120,12 @@ fun SignUpScreen(
 
             OutlinedTextField(
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag(TestTags.REG_PASSWORD_TEXT_FIELD),
                 label = { Text(text = "Password") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 value = state.password,
                 onValueChange = {
-                    onEvent(SignUpEvent.SetPassword(it))
+                    viewModel.onSignUpEvent(SignUpEvent.SetPassword(it))
                 },
                 isError = state.passwordError != null,
                 leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = null) },
@@ -136,7 +144,7 @@ fun SignUpScreen(
 
             if (state.passwordError != null) {
                 Text(
-                    text = state.passwordError,
+                    text = state.passwordError!!,
                     color = MaterialTheme.colorScheme.error,
                     lineHeight = 14.sp,
                     fontSize = 12.sp
@@ -147,12 +155,12 @@ fun SignUpScreen(
 
             OutlinedTextField(
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag(TestTags.CONFIRM_PASSWORD_TEXT_FIELD),
                 label = { Text(text = "Confirm Password") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 value = state.confirmPassword,
                 onValueChange = {
-                    onEvent(SignUpEvent.SetConfirmPassword(it))
+                    viewModel.onSignUpEvent(SignUpEvent.SetConfirmPassword(it))
                 },
                 isError = state.confirmPasswordError != null,
                 leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = null) },
@@ -171,7 +179,7 @@ fun SignUpScreen(
 
             if (state.confirmPasswordError != null) {
                 Text(
-                    text = state.confirmPasswordError,
+                    text = state.confirmPasswordError!!,
                     color = MaterialTheme.colorScheme.error,
                     lineHeight = 14.sp,
                     fontSize = 12.sp
@@ -194,10 +202,11 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(50.dp))
 
             OutlinedButton(
-                onClick = { onEvent(SignUpEvent.Submit(onClick = onClick)) },
+                onClick = { viewModel.onSignUpEvent(SignUpEvent.Submit(onClick = onClick)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(48.dp),
+                    .heightIn(48.dp)
+                    .semantics { contentDescription = "Register" },
                 contentPadding = PaddingValues(),
                 shape = RoundedCornerShape(5.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)

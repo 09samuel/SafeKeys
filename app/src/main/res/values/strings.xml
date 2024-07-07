@@ -3,4 +3,6 @@
     <string name="title_activity_main2">MainActivity2</string>
     <string name="hello_user">Hello user, have a great journey</string>
     <string name="remember">Remember this master password; if forgotten, all data will be lost and cannot be recovered.</string>
+    <string name="add_credential">Add Credential</string>
+    <string name="delete_credential">Delete Credential</string>
 </resources>

@@ -18,3 +18,5 @@ data class Credential (
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0
 )
+
+class InvalidCredentialException(message: String): Exception(message)

@@ -2,6 +2,7 @@ package com.example.safekeys.utils
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import com.example.safekeys.domain.model.EncryptedData
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -41,8 +42,6 @@ class CryptoManager {
         keyGenerator.init(keyGenParameterSpec)
         return keyGenerator.generateKey()
     }
-
-    data class EncryptedData(val encryptedBytes: ByteArray, val iv: ByteArray)
 
     fun encrypt(bytes: ByteArray): EncryptedData {
         val cipher = getEncryptCipher()

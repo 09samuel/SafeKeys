@@ -23,13 +23,13 @@ import javax.inject.Inject
 @HiltViewModel
 class CredentialViewModel @Inject constructor(
     private val credentialRepository: CredentialRepository,
+    private val cryptoManager: CryptoManager
 ) :
     ViewModel() {
 
     //val decryptedPasswords = mutableMapOf<Int, String>()
 
     private val _sortType = MutableStateFlow(SortType.TITLE)
-    private val cryptoManager = CryptoManager()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _credentials = _sortType.flatMapLatest { sortType ->
@@ -67,8 +67,6 @@ class CredentialViewModel @Inject constructor(
                 val website = state.value.website
                 val title = state.value.title
 
-
-
                 if (username.isBlank() || password.isBlank() || website.isBlank() || title.isBlank()) {
                     _state.update {
                         it.copy(
@@ -80,8 +78,6 @@ class CredentialViewModel @Inject constructor(
                     }
                     return
                 }
-
-
 
                 try {
                     val bytes = password.encodeToByteArray()

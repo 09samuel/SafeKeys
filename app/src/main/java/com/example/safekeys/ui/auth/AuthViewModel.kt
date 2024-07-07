@@ -55,7 +55,6 @@ class AuthViewModel @Inject constructor(
         sharedPreferenceHelper.setUserRegistered()
     }
 
-
     fun setLogin() {
         userRepository.setLogin()
     }

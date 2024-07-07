@@ -1,6 +1,7 @@
 package com.example.safekeys.service
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.PendingIntent
 import android.app.assist.AssistStructure
 import android.app.assist.AssistStructure.ViewNode
@@ -9,6 +10,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.IntentSender
+import android.net.Uri
+import android.os.Build
 import android.os.CancellationSignal
 import android.service.autofill.AutofillService
 import android.service.autofill.Dataset
@@ -18,18 +21,20 @@ import android.service.autofill.FillResponse
 import android.service.autofill.SaveCallback
 import android.service.autofill.SaveInfo
 import android.service.autofill.SaveRequest
+import android.telephony.TelephonyManager
 import android.text.InputType
 import android.util.Log
 import android.view.autofill.AutofillId
 import android.view.autofill.AutofillValue
 import android.widget.RemoteViews
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import com.example.safekeys.R
 import com.example.safekeys.data.model.Credential
 import com.example.safekeys.domain.repository.CredentialRepository
 import com.example.safekeys.domain.repository.UserRepository
 import com.example.safekeys.main.AuthActivity
 import com.example.safekeys.utils.CryptoManager
-import com.example.safekeys.utils.SharedPreferenceHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,9 +53,12 @@ class MyAutofillService : AutofillService() {
     @Inject
     lateinit var userRepository: UserRepository
 
+    @Inject
+    lateinit var cryptoManager: CryptoManager
+
 //    private var authResultReceiver = Broadcast()
 
-    private var currentFillCallback: FillCallback? = null
+    var currentFillCallback: FillCallback? = null
     private var usernameHints = arrayOf<String>()
     private var passwordHints = arrayOf<String>()
 
@@ -63,13 +71,22 @@ class MyAutofillService : AutofillService() {
     private var passwordId = mutableListOf<AutofillId>()
     private var fillResponse = FillResponse.Builder()
 
+
+    //private val autofillResultReceiver = AutofillResultBroadcastReceiver()
+
+    //private val authenticationResultReceiver = AuthenticationResultReceiver()
+
     override fun onCreate() {
+
         super.onCreate()
 
-//        val filter = IntentFilter().apply {
-//            addAction("com.example.safekeys.AUTH_RESULT")
+//        try {
+//            val filter = IntentFilter("com.example.AUTHENTICATION_RESULT")
+//            this.registerReceiver(authenticationResultReceiver, filter)
+//            Log.i("register12345","created")
+//        } catch (e: Exception) {
+//            Log.i("register12345","e.toString()")
 //        }
-//        applicationContext.registerReceiver(authResultReceiver, filter)
 
         usernameHints = resources.getStringArray(R.array.username_hints)
         passwordHints = resources.getStringArray(R.array.password_hints)
@@ -121,7 +138,7 @@ class MyAutofillService : AutofillService() {
                     credentialRepository.getCredentialsForAutofill(viewWebDomain)
 
                 if (credentials.isNotEmpty()) {
-                    val cryptoManager = CryptoManager()
+
                     val fillResponseBuilder =
                         FillResponse.Builder()  // Create a FillResponse builder
 
@@ -327,6 +344,7 @@ class MyAutofillService : AutofillService() {
 
         val authIntent = Intent(this, AuthActivity::class.java).apply {
             putExtra("MY_EXTRA_DATASET_NAME", "my_dataset")
+            putExtra("WEB_DOMAIN", viewWebDomain)
             putParcelableArrayListExtra("USERNAME_IDS", ArrayList(usernameId))
             putParcelableArrayListExtra("PASSWORD_IDS", ArrayList(passwordId))
 
@@ -335,11 +353,10 @@ class MyAutofillService : AutofillService() {
 
         val intentSender: IntentSender = PendingIntent.getActivity(
             this,
-            2,
+            1001,
             authIntent,
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         ).intentSender
-
 
 
         val fillResponse = FillResponse.Builder()
@@ -353,22 +370,51 @@ class MyAutofillService : AutofillService() {
         currentFillCallback?.onSuccess(fillResponse)
 
     }
+//    val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+//        // Handle the returned Uri
+//    }
 
-//    inner class Broadcast : BroadcastReceiver() {
-//        override fun onReceive(context: Context, intent: Intent) {
-//            if (intent.action == "com.example.safekeys.AUTH_RESULT") {
-//                currentFillCallback?.let {
-//                    Log.i("AutofillService123", "3")
-//                    fetchAndFillCredentials(it)
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        try {
+//            unregisterReceiver(authenticationResultReceiver)
+//        } catch (e: Exception) {
+//            Log.i("register12345",e.toString())
+//        }
+//
+//    }
+
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        when (requestCode) {
+//            MY_CHILD_ACTIVITY -> {
+//                if (resultCode == Activity.RESULT_OK) {
+//                    // TODO Extract the data returned from the child Activity.
+//                    val returnValue = data.getStringExtra("some_key")
 //                }
 //            }
 //        }
 //    }
-//
-//
-//    override fun onDestroy() {
-//        super.onDestroy()
-//        // Unregister broadcast receiver
-//        //applicationContext.unregisterReceiver(authResultReceiver)
-//    }
+
 }
+
+//class AuthenticationResultReceiver : BroadcastReceiver() {
+//    override fun onReceive(context: Context, intent: Intent) {
+//        Log.i("AuthenticationResultReceiver", "Broadcast received")
+//        if (intent.action == "com.example.AUTHENTICATION_RESULT") {
+//            val datasetName = intent.getStringExtra("MY_EXTRA_DATASET_NAME")
+//            val fillResponse: FillResponse? = intent.getParcelableExtra("EXTRA_AUTHENTICATION_RESULT")
+//            val callback: FillCallback? = (context as? MyAutofillService)?.currentFillCallback
+//
+//            if (fillResponse != null) {
+//                callback?.onSuccess(fillResponse)
+//                Log.i("AuthenticationResultReceiver", "Fill response received")
+//                // Process the fillResponse
+//            } else {
+//                Log.i("AuthenticationResultReceiver", "No fill response received")
+//                // Handle the error or cancellation
+//                callback?.onFailure("Authentication failed or cancelled")
+//            }
+//        }
+//    }
+//}

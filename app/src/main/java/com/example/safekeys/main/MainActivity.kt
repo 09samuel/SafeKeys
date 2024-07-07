@@ -1,15 +1,22 @@
 package com.example.safekeys.main
 
+import android.app.Activity
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.service.autofill.FillResponse
+import android.util.Log
+import android.view.autofill.AutofillManager.EXTRA_AUTHENTICATION_RESULT
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavHostController
@@ -17,55 +24,47 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.safekeys.navigation.Screen
+import com.example.safekeys.ui.NotificationViewModel
 import com.example.safekeys.ui.auth.AuthViewModel
-import com.example.safekeys.ui.home.CredentialViewModel
 import com.example.safekeys.ui.screens.HomeScreen
 import com.example.safekeys.ui.screens.LoginScreen
 import com.example.safekeys.ui.screens.SignUpScreen
 import com.example.safekeys.ui.theme.SafeKeysTheme
-import com.example.safekeys.utils.NotificationHelper
-import com.example.safekeys.utils.SharedPreferenceHelper
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var notificationHelper: NotificationHelper
+   // private lateinit var composeView: ComposeView
 
-    @Inject
-    lateinit var preferenceHelper: SharedPreferenceHelper
-
-    var count = 0
+    private val authViewModel: AuthViewModel by viewModels()
+    private val notificationViewModel: NotificationViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
+        val filter = IntentFilter("com.example.AUTHENTICATION_RESULT")
+        //registerReceiver(authenticationResultReceiver, filter)
+        //composeView = findViewById(R.id.my_composeview)
 
         if (intent?.action == "EXIT_ACTION") {
-            notificationHelper.cancelNotification()
+            notificationViewModel.cancelNotification()
             finishAndRemoveTask()
             return
         }
 
         // Check for notification permissions
-        notificationHelper.checkNotificationPermissions()
+        notificationViewModel.checkNotificationPermissions(this)
 
         enableEdgeToEdge()
         setContent {
             SafeKeysTheme {
-                val credentialViewModel = hiltViewModel<CredentialViewModel>()
+
                 val authViewModel = hiltViewModel<AuthViewModel>()
 
                 val navController = rememberNavController()
 
-                val credentialState by credentialViewModel.state.collectAsState()
-                val signUpState by authViewModel.signUpState.collectAsState()
-                val loginState by authViewModel.loginState.collectAsState()
 
 
                 NavHost(
@@ -74,9 +73,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable<Screen.SignUp> {
                         SignUpScreen(
-                            viewModel = authViewModel,
-                            state = signUpState,
-                            onEvent = authViewModel::onSignUpEvent,
                             onClick = {
                                 navController.navigate(Screen.Home)
                             }
@@ -84,9 +80,6 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<Screen.Login> {
                         LoginScreen(
-                            viewModel = authViewModel,
-                            state = loginState,
-                            onEvent = authViewModel::onLoginEvent,
                             onClick = {
                                 navController.navigate(Screen.Home)
                             }
@@ -104,26 +97,27 @@ class MainActivity : ComponentActivity() {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             } else {
-                                notificationHelper.cancelNotification()
+                                notificationViewModel.cancelNotification()
                                 finishAndRemoveTask()
                                 return@BackHandler
                             }
                         })
 
                         HomeScreen(
-                            state = credentialState,
-                            viewModel = credentialViewModel,
-                            onEvent = credentialViewModel::onEvent,
-                            onClick = {
-                                if (navController.canGoBack) {
-                                    navController.popBackStack()
-                                }
-                            }
+                           navController
                         )
                     }
                 }
             }
         }
+    }
+
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        super.onDestroy()
+
     }
 
     // Extension property to check if navigation controller can go back
@@ -136,14 +130,60 @@ class MainActivity : ComponentActivity() {
 //        Handler(Looper.getMainLooper()).postDelayed({
 //            finishAndRemoveTask()
 //        }, 3000)
-        count++
-        preferenceHelper.setUserLogOut()
+        // count++
+        if (authViewModel.checkLogin()) {
+            authViewModel.setLogOut()
+        }
     }
 
     override fun onRestart() {
         super.onRestart()
-        count--
-        preferenceHelper.setUserLogin()
+        //count--
+        authViewModel.setLogin()
+    }
+
+//    fun setContentInTemplate(content: @Composable () -> Unit) {
+//        runOnUiThread {
+//            composeView.setContent(content)
+//        }
+//    }
+
+//    private val authenticationResultReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context?, intent: Intent?) {
+//            // Handle the authentication result
+//            if (intent?.action == "com.example.AUTHENTICATION_RESULT") {
+//                // Process the result here
+//                val datasetName = intent.getStringExtra("MY_EXTRA_DATASET_NAME")
+//                val fillResponse: FillResponse = intent.getParcelableExtra(EXTRA_AUTHENTICATION_RESULT)!!
+//
+//                if (fillResponse != null) {
+////                callback?.onSuccess(fillResponse)
+//                Log.i("AuthenticationResultReceiver", "Fill response received")
+////                // Process the fillResponse
+//           } else {
+//                Log.i("AuthenticationResultReceiver", "No fill response received")
+////                // Handle the error or cancellation
+////                callback?.onFailure("Authentication failed or cancelled")
+//            }
+//            }
+//        }
+//    }
+
+
+
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Log.i("AuthenticationResultReceiver", "Fill responsaaaae received")
+        if (resultCode == Activity.RESULT_OK) {
+            data?.let {
+                val datasetName = it.getStringExtra("MY_EXTRA_DATASET_NAME")
+                val fillResponse: FillResponse? = it.getParcelableExtra(EXTRA_AUTHENTICATION_RESULT)
+                Log.i("AuthenticationResultReceiver", "Fill response received")
+                // Process the fill response and dataset name
+                // ...
+            }
+        }
     }
 
 }

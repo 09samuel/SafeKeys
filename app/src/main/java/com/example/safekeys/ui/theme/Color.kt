@@ -2,10 +2,12 @@ package com.example.safekeys.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFF1F1D22)
-val PurpleGrey80 = Color(0xFF313033)
-val Pink80 = Color(0xFF5A5658)
+// Light Mode Colors
+val White = Color(0xFFFFFFFF)
+val LightGray = Color(0xFFCCCCCC)
+val Black = Color(0xFF000000)
 
-val Purple40 = Color(0xFF1F1D22)
-val PurpleGrey40 = Color(0xFF313033)
-val Pink40 = Color(0xFF5A5658)
+// Dark Mode Colors
+val DarkGray = Color(0xFF121212)
+val DarkerGray = Color(0xFF1E1E1E)
+val OffWhite = Color(0xFFE0E0E0)
