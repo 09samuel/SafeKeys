@@ -36,17 +36,12 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-   // private lateinit var composeView: ComposeView
-
     private val authViewModel: AuthViewModel by viewModels()
     private val notificationViewModel: NotificationViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val filter = IntentFilter("com.example.AUTHENTICATION_RESULT")
-        //registerReceiver(authenticationResultReceiver, filter)
-        //composeView = findViewById(R.id.my_composeview)
 
         if (intent?.action == "EXIT_ACTION") {
             notificationViewModel.cancelNotification()
@@ -61,11 +56,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             SafeKeysTheme {
 
-                val authViewModel = hiltViewModel<AuthViewModel>()
-
+                //val authViewModel = hiltViewModel<AuthViewModel>()
                 val navController = rememberNavController()
-
-
 
                 NavHost(
                     navController = navController,
@@ -127,10 +119,6 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
 
         super.onStop()
-//        Handler(Looper.getMainLooper()).postDelayed({
-//            finishAndRemoveTask()
-//        }, 3000)
-        // count++
         if (authViewModel.checkLogin()) {
             authViewModel.setLogOut()
         }
@@ -138,7 +126,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onRestart() {
         super.onRestart()
-        //count--
         authViewModel.setLogin()
     }
 
@@ -168,23 +155,6 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 //    }
-
-
-
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        Log.i("AuthenticationResultReceiver", "Fill responsaaaae received")
-        if (resultCode == Activity.RESULT_OK) {
-            data?.let {
-                val datasetName = it.getStringExtra("MY_EXTRA_DATASET_NAME")
-                val fillResponse: FillResponse? = it.getParcelableExtra(EXTRA_AUTHENTICATION_RESULT)
-                Log.i("AuthenticationResultReceiver", "Fill response received")
-                // Process the fill response and dataset name
-                // ...
-            }
-        }
-    }
 
 }
 

@@ -10,7 +10,6 @@ interface UserRepository {
 
     fun isUserRegistered(): Boolean
 
-
     fun setRegistration()
 
     fun setLogin()

@@ -17,7 +17,6 @@ class SharedPreferenceHelper @Inject constructor(@ApplicationContext private val
         return preferences.getBoolean("is_registered", false)
     }
 
-    // Function to set the user as logged in
     fun setUserRegistered() {
         val preferences = context.getSharedPreferences(MY_PREF_KEY, Context.MODE_PRIVATE)
         preferences.edit().putBoolean("is_registered", true).apply()

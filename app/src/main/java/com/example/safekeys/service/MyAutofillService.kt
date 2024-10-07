@@ -33,7 +33,6 @@ import com.example.safekeys.R
 import com.example.safekeys.data.model.Credential
 import com.example.safekeys.domain.repository.CredentialRepository
 import com.example.safekeys.domain.repository.UserRepository
-import com.example.safekeys.main.AuthActivity
 import com.example.safekeys.utils.CryptoManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -117,14 +116,14 @@ class MyAutofillService : AutofillService() {
             traverseStructure(structure = structure, mode = false)
 
             if (passwordId.isNotEmpty() && usernameId.isNotEmpty()) {
-                if (!isUserLoggedIn()) {
-                    Log.i("AutofillService123", "1")
-                    currentFillCallback = callback
-                    requestAuthentication()
-                } else {
+//                if (!isUserLoggedIn()) {
+//                    Log.i("AutofillService123", "1")
+//                    currentFillCallback = callback
+//                    requestAuthentication()
+//                } else {
                     Log.i("AutofillService123", "2")
                     fetchAndFillCredentials(callback)
-                }
+                //}
             } else {
                 Log.i("AutofillService", "No password or username IDs found")
             }
@@ -336,40 +335,7 @@ class MyAutofillService : AutofillService() {
         return userRepository.isUserLoggedIn()
     }
 
-    private fun requestAuthentication() {
-        val authPresentation = RemoteViews(packageName, R.layout.autofill_unavailable).apply {
-            setTextViewText(R.id.message, "Tap to sign in to SafeKeys")
-            setTextViewText(R.id.label, "for autofill and saving passwords")
-        }
 
-        val authIntent = Intent(this, AuthActivity::class.java).apply {
-            putExtra("MY_EXTRA_DATASET_NAME", "my_dataset")
-            putExtra("WEB_DOMAIN", viewWebDomain)
-            putParcelableArrayListExtra("USERNAME_IDS", ArrayList(usernameId))
-            putParcelableArrayListExtra("PASSWORD_IDS", ArrayList(passwordId))
-
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        val intentSender: IntentSender = PendingIntent.getActivity(
-            this,
-            1001,
-            authIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        ).intentSender
-
-
-        val fillResponse = FillResponse.Builder()
-            .setAuthentication(
-                arrayOf(usernameId.last(), passwordId.last()),
-                intentSender,
-                authPresentation
-            )
-            .build()
-
-        currentFillCallback?.onSuccess(fillResponse)
-
-    }
 //    val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
 //        // Handle the returned Uri
 //    }
